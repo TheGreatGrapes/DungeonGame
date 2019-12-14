@@ -55,14 +55,14 @@ class Ball(Widget):
         self.acc += acc
 
 
-class Table(BoxLayout):
+class Level(BoxLayout):
     ball = ObjectProperty()
     acc_label = ObjectProperty()
     fri_label = ObjectProperty()
     button = ObjectProperty()
 
     def __init__(self, *args):
-        super(Table, self).__init__(*args)
+        super(Level, self).__init__(*args)
         self.sensorEnabled = False
         self.ball.center = self.center
         self.fric_coef = .05
@@ -107,7 +107,7 @@ class Table(BoxLayout):
         try:
             if not self.sensorEnabled:
                 accelerometer.enable()
-                Clock.schedule_interval(self.get_acceleration, 0.01)
+                Clock.schedule_interval(self.get_acceleration, 0.05)
 
                 self.sensorEnabled = True
                 self.button.text = "Stop"
@@ -141,9 +141,9 @@ class Table(BoxLayout):
 class DungeonGameApp(App):
 
     def build(self):
-        t = Table()
-        Clock.schedule_interval(t.update, 0.01)
-        return t
+        l = Level()
+        Clock.schedule_interval(l.update, 0.05)
+        return l
 
     def on_pause(self):
         return True
