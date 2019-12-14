@@ -1,0 +1,42 @@
+#:kivy 1.8.0
+<Ball>:
+    size: 50, 50
+    canvas:
+        Ellipse:
+            size: self.size
+            pos: self.pos
+
+<Table>:
+    orientation: 'vertical'
+
+    ball: my_ball
+    acc_label: my_acc_label
+    fri_label: my_fri_label
+    button: toggle_button
+
+    FloatLayout:
+        Ball:
+            id: my_ball
+            size_hint: None, None
+            center: root.center
+
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: '48dp'
+        padding: '4dp'
+
+        Label:
+            id: my_acc_label
+            font_size: 30
+            text: ''
+
+        ToggleButton:
+            id: toggle_button
+            text: 'Start'
+            on_press: root.do_toggle()
+
+        Label:
+            id: my_fri_label
+            font_size: 30
+            text: ''

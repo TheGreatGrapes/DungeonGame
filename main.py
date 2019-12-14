@@ -1,20 +1,153 @@
-from kivy.app import App
 from kivy.uix.widget import Widget
-from kivy.graphics import Ellipse
 from kivy.core.window import Window
+from kivy.app import App
+from kivy.clock import Clock
+from kivy.vector import Vector
+from kivy.uix.boxlayout import BoxLayout
+from kivy.properties import ObjectProperty, NumericProperty, ReferenceListProperty
+from plyer import accelerometer
+import numpy as np
+import math
+
+class PVector(Vector):
+
+    def __init__(self, *args):
+        super(PVector, self).__init__(*args)
+
+    def limit(self, val):
+        if self.length() > val:
+            self[0], self[1] = self.normalize() * val
+
+    @staticmethod
+    def acc_to_rad(self, acc):
+        return PVector(list(map(math.cos, acc * math.pi / 180)))
+
 
 class Ball(Widget):
+    vel = PVector(0, 0)
+    acc = PVector(0, 0)
+    mass = 50
 
-    def __init__(self):
-        super(Ball, self).__init__()
-        with self.canvas:
-            self.Ball = Ellipse(pos=Window.center, size=(30, 30))
+    def move(self):
+        self.vel += self.acc
+        # self.vel.limit(10)
+        self.pos = PVector(self.pos) + self.vel
+        self.acc *= 0
 
-class DungeonGame(App):
+    def checkEdge(self):
+        if self.center[0] > Window.width:
+            self.center[0] = Window.width
+            self.vel[0] *= -1
+
+        elif self.center[0] < 0:
+            self.vel[0] *= -1
+            self.center[0] = 0
+
+        if self.center[1] > Window.height:
+            self.center[1] = Window.height
+            self.vel[1] *= -1
+        elif self.center[1] < 100:
+            self.center[1] = 100
+            self.vel[1] *= -1
+
+    def applyForce(self, force):
+        acc = force / self.mass
+        self.acc += acc
+
+
+class Table(BoxLayout):
+    ball = ObjectProperty()
+    acc_label = ObjectProperty()
+    fri_label = ObjectProperty()
+    button = ObjectProperty()
+
+    def __init__(self, *args):
+        super(Table, self).__init__(*args)
+        self.sensorEnabled = False
+        self.ball.center = self.center
+        self.fric_coef = .05
+        self.grav = PVector(0, 0)
+
+
+    def get_mouse_gravity(self):
+        # Compute gravity
+        gravity = PVector(Window.mouse_pos) - PVector(self.center)
+        gravity.x = float(np.interp(gravity[0], [-400, 400], [-10, 10]))
+        gravity.y = float(np.interp(gravity[1], [-300, 300], [-10, 10]))
+        return gravity
+
+    def get_friction(self):
+        angle_in_rad = PVector.acc_to_rad(self, self.grav)
+        return - angle_in_rad * self.ball.mass * self.ball.vel * self.fric_coef
+
+    def update(self, dt):
+        friction = self.get_friction()
+        # gravity = self.get_mouse_gravity()
+        gravity = -1 * self.grav
+        '''
+        self.fri_label.text = "Fri:" + \
+                          str(math.floor(friction.x))+ \
+                          ', ' + \
+                          str(math.floor(friction.y))
+
+        self.acc_label.text = "Acc:" + \
+                         str(math.floor(self.grav.x))+ \
+                         ', ' + \
+                         str(math.floor(self.grav.y))
+        self.fri_label.text = "Grav: " +  str(gravity)
+        '''
+
+        self.ball.applyForce(friction)
+        self.ball.applyForce(self.ball.mass * gravity)
+
+        self.ball.checkEdge()
+        self.ball.move()
+
+    def do_toggle(self):
+        try:
+            if not self.sensorEnabled:
+                accelerometer.enable()
+                Clock.schedule_interval(self.get_acceleration, 0.01)
+
+                self.sensorEnabled = True
+                self.button.text = "Stop"
+                self.startTimer = True
+            else:
+                accelerometer.disable()
+                Clock.unschedule(self.get_acceleration)
+
+                self.sensorEnabled = False
+                self.button.text = "Start"
+                self.ball.collision = 0
+                self.startTimer = False
+
+        except NotImplementedError:
+            import traceback
+            traceback.print_exc()
+            status = "Accelerometer is not implemented for your platform"
+            self.ids.accel_status.text = status
+
+    def get_acceleration(self, dt):
+        val = accelerometer.acceleration[:3]
+
+        if not val == (None, None, None):
+            # self.acc_label.text = "X: " + str(type(val[0]))
+            # self.fri_label.text = "Y: " + str(type(val))
+
+            self.grav.x = val[0]
+            self.grav.y = val[1]
+
+
+class DungeonGameApp(App):
 
     def build(self):
-        return Ball()
+        t = Table()
+        Clock.schedule_interval(t.update, 0.01)
+        return t
+
+    def on_pause(self):
+        return True
 
 
 if __name__ == "__main__":
-    DungeonGame().run()
+    DungeonGameApp().run()
