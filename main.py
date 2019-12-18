@@ -2,25 +2,15 @@ from kivy.uix.widget import Widget
 from kivy.core.window import Window
 from kivy.app import App
 from kivy.clock import Clock
-from kivy.vector import Vector
+from lib.pvector import PVector
 from kivy.uix.boxlayout import BoxLayout
-from kivy.properties import ObjectProperty, NumericProperty, ReferenceListProperty
+from kivy.properties import ObjectProperty, NumericProperty, ListProperty
 from plyer import accelerometer
 import numpy as np
+from random import randint
+
 import math
-
-class PVector(Vector):
-
-    def __init__(self, *args):
-        super(PVector, self).__init__(*args)
-
-    def limit(self, val):
-        if self.length() > val:
-            self[0], self[1] = self.normalize() * val
-
-    @staticmethod
-    def acc_to_rad(self, acc):
-        return PVector(list(map(math.cos, acc * math.pi / 180)))
+from room import Room
 
 
 class Ball(Widget):
@@ -60,13 +50,16 @@ class Level(BoxLayout):
     acc_label = ObjectProperty()
     fri_label = ObjectProperty()
     button = ObjectProperty()
+    room = ObjectProperty()
 
     def __init__(self, *args):
         super(Level, self).__init__(*args)
         self.sensorEnabled = False
-        self.ball.center = self.center
         self.fric_coef = .05
         self.grav = PVector(0, 0)
+        self.room.center = randint(0, Window.width), randint(0, Window.height)
+        self.ball.center = self.room.center
+        self.room.init_room()
 
 
     def get_mouse_gravity(self):
@@ -142,7 +135,9 @@ class DungeonGameApp(App):
 
     def build(self):
         l = Level()
+
         Clock.schedule_interval(l.update, 0.05)
+
         return l
 
     def on_pause(self):

@@ -1,10 +1,13 @@
+#:import randint random
 #:kivy 1.8.0
+
 <Ball>:
-    size: 50, 50
-    canvas:
-        Ellipse:
-            size: self.size
-            pos: self.pos
+    size: 10, 10
+
+
+<Room>:
+    size: 100, 100
+
 
 <Level>:
     orientation: 'vertical'
@@ -13,12 +16,24 @@
     acc_label: my_acc_label
     fri_label: my_fri_label
     button: toggle_button
+    room: my_room
+
 
     FloatLayout:
         Ball:
             id: my_ball
             size_hint: None, None
-            center: root.center
+            canvas:
+                Color:
+                    rgba: 1,0,0,1
+                Ellipse:
+                    size: self.size
+                    pos: self.pos
+        Room:
+            id: my_room
+            size_hint: None, None
+            center: 100, 100
+
 
     BoxLayout:
         orientation: 'horizontal'

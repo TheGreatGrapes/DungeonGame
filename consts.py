@@ -1,5 +1,4 @@
-tiles = 
-{
+tiles ={
   "blank": 0,
   "wall": 1,
   "floor": 2,
